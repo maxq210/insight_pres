@@ -97,6 +97,16 @@ def _construct_response(output_logits, inv_dec_vocab):
     # Print out sentence corresponding to outputs.
     return " ".join([tf.compat.as_str(inv_dec_vocab[output]) for output in outputs])
 
+def construct_email(line):
+    recipients = ['username@company.com']
+    message = "Test"
+    if line.find('@') is not -1:
+        recipients = re.findall('\w+\@\w+.\w+', line)
+    if line.find(':') is not -1:
+        message = line[line.find(':') + 1:]
+    webbrowser.open("mailto:%s?subject=%s&body=%s" % (','.join(recipients), 'Subject', message))
+    return 'Please add a Subject to email before sending.'
+
 conv = []
 @app.route('/')
 def load_page():
@@ -137,13 +147,3 @@ def foo():
             response = _construct_response(output_logits, inv_dec_vocab)
         conv.append('Bot: ' + response)
         return render_template('index.html', chat_output=conv)
-
-def construct_email(line):
-    recipients = ['username@company.com']
-    message = "Test"
-    if line.find('@') is not -1:
-        recipients = re.findall('\w+\@\w+.\w+', line)
-    if line.find(':') is not -1:
-        message = line[line.find(':') + 1:]
-    webbrowser.open("mailto:%s?subject=%s&body=%s" % (','.join(recipients), 'Subject', message))
-    return 'Please add a Subject to email before sending.'
