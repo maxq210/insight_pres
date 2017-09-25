@@ -27,7 +27,7 @@ def basic_tokenizer(line, normalize_digits=True):
     #python 3: b"" turns string into "bytes literal" which turns string into byte. Ignored in Python 2
     #r string prefix is raw string: '\n' is \,n instead of newline
     _WORD_SPLIT = re.compile(b"([.,!?\"'-<>:;)(])") #includes () for re.split below
-    _DIGIT_RE = re.compile(r"\d")
+    _DIGIT_RE = re.compile(bytes(r"\d", 'utf8'))
     #strip removes whitespace at beginning and end
     #lowercase string
     for fragment in line.strip().lower().split(): #each of these is a fragment ['you,', 'are', 'here!']
