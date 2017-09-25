@@ -122,7 +122,7 @@ def foo():
             return render_template('index.html', chat_output=['Hi, I am looking forward to talking to you'])
         line = request.form['message']
         conv.append("Human: " + line)
-        token_ids = data.sentence2id(enc_vocab, str(line))
+        token_ids = data.sentence2id(enc_vocab, line)
         bucket_id = _find_right_bucket(len(token_ids))
         encoder_inputs, decoder_inputs, decoder_masks = data.get_batch([(token_ids, [])], 
                                                                         bucket_id,

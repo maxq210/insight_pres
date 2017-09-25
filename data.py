@@ -6,98 +6,6 @@ import numpy as np
 import config
 from big_bang_read import get_bang_convs, get_bang_ques_ans
 
-#returns id2line: a dictionary of identifier to line without \n at end from movie_lines.txt
-# ex id2line = {'L1045': 'They do not!', 'L1044': 'They do too!'}
-def get_lines():
-    id2line = {}
-    file_path = os.path.join(config.DATA_PATH, config.LINE_FILE)
-    with open(file_path, 'rb') as f:
-        lines = f.readlines()
-        for line in lines:
-            parts = line.split(' +++$+++ ')
-            if len(parts) == 5:
-                if parts[4][-1] == '\n': #cut off /n at end of line
-                    parts[4] = parts[4][:-1]
-                id2line[parts[0]] = parts[4]
-    return id2line
-
-def get_convos():
-    """ Get conversations from the raw data """
-    # returns array of arrays with line data from movie_conversations.txt
-    # ex. convos = [['L194', 'L195', 'L196'], ['L198', L'199']]
-    file_path = os.path.join(config.DATA_PATH, config.CONVO_FILE)
-    convos = []
-    with open(file_path, 'rb') as f:
-        for line in f.readlines():
-            parts = line.split(' +++$+++ ')
-            if len(parts) == 4:
-                convo = []
-                for line in parts[3][1:-2].split(', '):
-                    convo.append(line[1:-1])
-                convos.append(convo)
-
-    return convos
-
-def question_answers(id2line, convos):
-    """ Divide the dataset into two sets: questions and answers. """
-    # ex. questions: [index 0'they do not!', 'they do to!', 'i hope so.'...length - 1]
-    # ex. answers: [index 1'they do to!', 'i hope so.', 'She okay?'...length]
-    questions, answers = [], []
-    for convo in convos:
-        for idx, line in enumerate(convo[:-1]):
-            questions.append(id2line[convo[idx]])
-            answers.append(id2line[convo[idx + 1]])
-    assert len(questions) == len(answers)
-    return questions, answers
-
-def bang_char_ques_ans(char_dict, char):
-    questions, answers= [], []
-    for index, line in enumerate(char_dict[char]):
-        questions.append(char_dict[char][index][0])
-        answers.append(char_dict[char][index][1])
-    assert len(questions) == len(answers)
-    return questions, answers
-
-def prepare_dataset(questions, answers, bang_questions, bang_answers, char_dict):
-    #stores questions and answers in training and test files in processed directory
-    # create path to store all the train & test encoder & decoder
-    make_dir(config.PROCESSED_PATH)
-    
-    # random convos to create the test set
-    #random sample w/o replacement: random.sample(population, k)
-    #test_ids: list of ids for test data ex. test_ids = [5, 7003, 2, 49]
-    sheldon_questions, sheldon_answers = bang_char_ques_ans(char_dict, 'Sheldon')
-
-    test_ids = random.sample([i for i in range(len(questions))],config.TESTSET_SIZE)
-    test_ids2 = random.sample([i for i in range(len(bang_questions))],config.TESTSET_SIZE2)
-    test_ids3 = random.sample([i for i in range(len(sheldon_questions))],config.TESTSET_SIZE3)
-    #Create 4 files in processed path and an array 'files' that stores their names
-    filenames = ['train.enc', 'train.dec', 'test.enc', 'test.dec']
-    filenames_bang = ['bang_train.enc', 'bang_train.dec', 'bang_test.enc', 'bang_test.dec']
-    filenames_sheldon = ['sheldon_train.enc', 'sheldon_train.dec', 'sheldon_test.enc', 'sheldon_test.dec']
-
-    def prepare_files(file_list, test_ids, questions, answers):
-        files = []
-        for filename in file_list:
-            files.append(open(os.path.join(config.PROCESSED_PATH, filename),'wb'))
-
-        for i in range(len(questions)):
-            if i in test_ids:
-                #if id # in test, write question to test.enc and answer to test.dec
-                files[2].write(questions[i] + '\n')
-                files[3].write(answers[i] + '\n')
-            else:
-                #otherwise, write question to train.enc and answer to test.dec
-                files[0].write(questions[i] + '\n')
-                files[1].write(answers[i] + '\n')
-
-        for file in files:
-            file.close()
-
-    prepare_files(filenames, test_ids, questions, answers)
-    prepare_files(filenames_bang, test_ids2, bang_questions, bang_answers)
-    prepare_files(filenames_sheldon, test_ids3, sheldon_questions, sheldon_answers)
-
 def make_dir(path):
     """ Create a directory if there isn't one already. """
     try:
@@ -131,45 +39,6 @@ def basic_tokenizer(line, normalize_digits=True):
             words.append(token)
     return words
 
-def build_vocab(filename, filename2, normalize_digits=True):
-    #writes vocabulary from training input file to vocab file (either enc or dec) 
-    in_path = os.path.join(config.PROCESSED_PATH, filename)
-    in_path2 = os.path.join(config.PROCESSED_PATH, filename2)
-    out_path = os.path.join(config.PROCESSED_PATH, 'vocab.{}'.format(filename[-3:]))
-
-    vocab = {}
-    with open(in_path, 'rb') as f:
-        for line in f.readlines():
-            for token in basic_tokenizer(line):
-                if not token in vocab:
-                    vocab[token] = 0
-                vocab[token] += 1
-
-    with open(in_path2, 'rb') as f:
-        for line in f.readlines():
-            for token in basic_tokenizer(line):
-                if not token in vocab:
-                    vocab[token] = 0
-                vocab[token] += 1
-
-    sorted_vocab = sorted(vocab, key=vocab.get, reverse=True)
-    with open(out_path, 'wb') as f:
-        f.write('<pad>' + '\n')
-        f.write('<unk>' + '\n')
-        f.write('<s>' + '\n')
-        f.write('<\s>' + '\n') 
-        index = 4
-        for word in sorted_vocab:
-            if vocab[word] < config.THRESHOLD:
-                with open('config.py', 'ab') as cf:
-                    if filename[-3:] == 'enc':
-                        cf.write('ENC_VOCAB = ' + str(index) + '\n')
-                    else:
-                        cf.write('DEC_VOCAB = ' + str(index) + '\n')
-                break
-            f.write(word + '\n')
-            index += 1
-
 
 def load_vocab(vocab_path):
 # returns words: array of words in vocab file and dictionary {word: index in vocab file}
@@ -180,60 +49,6 @@ def load_vocab(vocab_path):
 def sentence2id(vocab, line):
     #for each token in line, returns word's ID in vocab or <unk>'s id if not in vocab
     return [vocab.get(token, vocab['<unk>']) for token in basic_tokenizer(line)]
-
-def token2id(data, mode, phase):
-    """ Convert all the tokens in the data into their corresponding
-    index in the vocabulary. """ 
-    #Outputs data in the form of tokens from vocab to processed/(train_or_test)/ids.(enc or dec)
-    vocab_path = 'vocab.' + mode
-    in_path = data + '.' + mode
-    out_path = data + '_ids.' + mode
-
-    _, vocab = load_vocab(os.path.join(config.PROCESSED_PATH, vocab_path))
-    in_file = open(os.path.join(config.PROCESSED_PATH, in_path), 'rb')
-    out_file = open(os.path.join(config.PROCESSED_PATH, out_path), 'wb')
-    
-    lines = in_file.read().splitlines()
-    for line in lines:
-        if mode == 'dec' and phase is not 2: # we only care about '<s>' and </s> in encoder
-            ids = [vocab['<s>']]
-        else:
-            ids = []
-        ids.extend(sentence2id(vocab, line))
-        # ids.extend([vocab.get(token, vocab['<unk>']) for token in basic_tokenizer(line)])
-        if mode == 'dec':
-            ids.append(vocab['<\s>'])
-        out_file.write(' '.join(str(id_) for id_ in ids) + '\n')
-
-def prepare_raw_data():
-#puts questions and answers into processed folder for training and test
-    print('Preparing raw data into train set and test set ...')
-    id2line = get_lines()
-    convos = get_convos()
-    bang_convs, char_dict = get_bang_convs()
-    bang_questions, bang_answers = get_bang_ques_ans(bang_convs)
-    questions, answers = question_answers(id2line, convos)
-    prepare_dataset(questions, answers, bang_questions, bang_answers, char_dict)
-
-def process_data():
-    #creates test and training files of id's from vocabulary
-    print('Preparing data to be model-ready ...')
-    build_vocab('train.enc', 'bang_train.enc')
-    build_vocab('train.dec', 'bang_train.dec')
-    token2id('train', 'enc', 1)
-    token2id('train', 'dec', 1)
-    token2id('test', 'enc', 1)
-    token2id('test', 'dec', 1)
-    print('Preparing Big Bang data to be model-ready ....')
-    token2id('bang_train', 'enc', 2)
-    token2id('bang_train', 'dec', 2)
-    token2id('bang_test', 'enc', 2)
-    token2id('bang_test', 'dec', 2)
-    print('Preparing Sheldon data to be model-ready ....')
-    token2id('sheldon_train', 'enc', 3)
-    token2id('sheldon_train', 'dec', 3)
-    token2id('sheldon_test', 'enc', 3)
-    token2id('sheldon_test', 'dec', 3)
 
 def load_data(enc_filename, dec_filename, max_training_size=None):
     #returns data_buckets: For each tuple in BUCKETS from config file, contains an array of 2 arrays: encoded ids and decoded ids
@@ -306,7 +121,3 @@ def get_batch(data_bucket, bucket_id, batch_size=1):
                 batch_mask[batch_id] = 0.0
         batch_masks.append(batch_mask)
     return batch_encoder_inputs, batch_decoder_inputs, batch_masks
-
-if __name__ == '__main__':
-    prepare_raw_data()
-    process_data()
