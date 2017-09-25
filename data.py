@@ -105,6 +105,8 @@ def get_batch(data_bucket, bucket_id, batch_size=1):
 
     # now we create batch-major vectors from the data selected above.
     #encoder_inputs: array of padded/reversed encoded lines
+    print(encoder_inputs)
+    print(decoder_inputs)
     batch_encoder_inputs = _reshape_batch(encoder_inputs, encoder_size, batch_size)
     batch_decoder_inputs = _reshape_batch(decoder_inputs, decoder_size, batch_size)
 
