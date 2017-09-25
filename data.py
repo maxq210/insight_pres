@@ -48,7 +48,7 @@ def load_vocab(vocab_path):
 
 def sentence2id(vocab, line):
     #for each token in line, returns word's ID in vocab or <unk>'s id if not in vocab
-    return [vocab.get(token, vocab['<unk>']) for token in basic_tokenizer(line)]
+    return [vocab.get(token, vocab['<unk>']) for token in basic_tokenizer(bytes(line))]
 
 def load_data(enc_filename, dec_filename, max_training_size=None):
     #returns data_buckets: For each tuple in BUCKETS from config file, contains an array of 2 arrays: encoded ids and decoded ids
