@@ -135,6 +135,8 @@ def foo():
         if line.find('email') is not -1:
             response = construct_email(line)
             return redirect('mailto:test@mail.com')
+        elif enc_vocab.find(line) is -1:
+            response = "I don't understand."
         else:
             token_ids = data.sentence2id(enc_vocab, line)
             bucket_id = _find_right_bucket(len(token_ids))
