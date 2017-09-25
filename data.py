@@ -85,9 +85,13 @@ def _reshape_batch(inputs, size, batch_size):
     #batch major means first index of tensor is batch size
     """
     batch_inputs = []
+    for arr in inputs:
+        for idx, num in enumerate(arr):
+            if num is None:
+                arr[idx] = 0
     for length_id in range(size):
         batch_inputs.append(np.array([inputs[batch_id][length_id]
-                                    for batch_id in range(1)], dtype=np.int32))
+                                    for batch_id in range(batch_size)], dtype=np.int32))
     return batch_inputs
 
 
@@ -105,8 +109,6 @@ def get_batch(data_bucket, bucket_id, batch_size=1):
 
     # now we create batch-major vectors from the data selected above.
     #encoder_inputs: array of padded/reversed encoded lines
-    print(encoder_inputs)
-    print(decoder_inputs)
     batch_encoder_inputs = _reshape_batch(encoder_inputs, encoder_size, batch_size)
     batch_decoder_inputs = _reshape_batch(decoder_inputs, decoder_size, batch_size)
 
