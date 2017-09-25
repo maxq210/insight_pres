@@ -132,18 +132,21 @@ def foo():
             return render_template('index.html', chat_output=['Hi, I am looking forward to talking to you'])
         line = request.form['message']
         conv.append("Human: " + line)
-        if (len(token_ids) > max_length):
-            response = "Exceeded maximum length of " + str(max_length)
         elif line.find('email') is not -1:
             response = construct_email(line)
+            conv.append('Bot: ' + response)
         else:
             token_ids = data.sentence2id(enc_vocab, line)
-            bucket_id = _find_right_bucket(len(token_ids))
-            encoder_inputs, decoder_inputs, decoder_masks = data.get_batch([(token_ids, [])], 
-                                                                        bucket_id,
-                                                                        batch_size=1)
-            _, _, output_logits = run_step(sess, model, encoder_inputs, decoder_inputs,
-                                        decoder_masks, bucket_id, True)
-            response = _construct_response(output_logits, inv_dec_vocab)
-        conv.append('Bot: ' + response)
+            if (len(token_ids) > max_length):
+                response = "Exceeded maximum length of " + str(max_length)
+                conv.append('Bot: ' + response)
+            else:
+                bucket_id = _find_right_bucket(len(token_ids))
+                encoder_inputs, decoder_inputs, decoder_masks = data.get_batch([(token_ids, [])], 
+                                                                            bucket_id,
+                                                                            batch_size=1)
+                _, _, output_logits = run_step(sess, model, encoder_inputs, decoder_inputs,
+                                            decoder_masks, bucket_id, True)
+                response = _construct_response(output_logits, inv_dec_vocab)
+                conv.append('Bot: ' + response)
         return render_template('index.html', chat_output=conv)
