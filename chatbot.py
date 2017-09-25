@@ -147,8 +147,3 @@ def construct_email(line):
         message = line[line.find(':') + 1:]
     webbrowser.open("mailto:%s?subject=%s&body=%s" % (','.join(recipients), 'Subject', message))
     return 'Please add a Subject to email before sending.'
-
-if __name__ == '__main__':
-    if not os.path.isdir(config.PROCESSED_PATH):
-        data.prepare_raw_data()
-        data.process_data() 
