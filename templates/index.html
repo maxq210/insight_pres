@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>title</title>
+  </head>
+  <body>
+  	<form action="/comments/" method="post">
+  		Message:  
+  		<input type="text" name="message"><br><br>
+  		<button type="submit" name="submit" value="Submit">Submit</button>
+  		<button type="submit" name="submit" value="Clear">Clear</button>
+  		{% for post in chat_output %}
+  			<h2>{{post}}</h2>
+  		{% endfor %}
+  	</form>
+  </body>
+</html>
