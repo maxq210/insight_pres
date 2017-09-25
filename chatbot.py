@@ -135,7 +135,7 @@ def foo():
         if line.find('email') is not -1:
             response = construct_email(line)
             return redirect('mailto:test@mail.com')
-        elif enc_vocab.find(line) is -1:
+        elif enc_vocab[line.lower()] is None:
             response = "I don't understand."
         else:
             token_ids = data.sentence2id(enc_vocab, line)
