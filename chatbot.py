@@ -134,6 +134,7 @@ def foo():
         conv.append("Human: " + line)
         if line.find('email') is not -1:
             response = construct_email(line)
+            return redirect('mailto:test@mail.com')
         else:
             token_ids = data.sentence2id(enc_vocab, line)
             bucket_id = _find_right_bucket(len(token_ids))
