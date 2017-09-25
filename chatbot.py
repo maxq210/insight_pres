@@ -98,7 +98,6 @@ def _construct_response(output_logits, inv_dec_vocab):
     return " ".join([tf.compat.as_str(inv_dec_vocab[output]) for output in outputs])
 
 conv = []
-app = Flask(__name__)
 @app.route('/')
 def load_page():
     return render_template('index.html', chat_output=['Hi, I am looking forward to talking to you'])
@@ -110,15 +109,14 @@ model.build_graph()
 
 saver = tf.train.Saver()
 
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    _check_restore_parameters(sess, saver)
-    output_file = open(os.path.join(config.PROCESSED_PATH, config.OUTPUT_FILE), 'a+')
-    # Decode from standard input.
-    max_length = config.BUCKETS[-1][0]
-    print('Hi, looking forward to talking to you. Press enter to leave. Max length is', max_length)
-    @app.route('/comments/', methods=['GET', 'POST'])
-    def foo():
+#print('Hi, looking forward to talking to you. Press enter to leave. Max length is', max_length)
+@app.route('/comments/', methods=['GET', 'POST'])
+def foo():
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        _check_restore_parameters(sess, saver)
+        # Decode from standard input.
+        max_length = config.BUCKETS[-1][0]
         if request.form['submit'] == 'Clear':
             del conv[:]
             return render_template('index.html', chat_output=['Hi, I am looking forward to talking to you'])
@@ -139,7 +137,6 @@ with tf.Session() as sess:
             response = _construct_response(output_logits, inv_dec_vocab)
         conv.append('Bot: ' + response)
         return render_template('index.html', chat_output=conv)
-    app.run(host='0.0.0.0')
 
 def construct_email(line):
     recipients = ['username@company.com']
@@ -155,45 +152,3 @@ if __name__ == '__main__':
     if not os.path.isdir(config.PROCESSED_PATH):
         data.prepare_raw_data()
         data.process_data() 
-    conv = []
-    @app.route('/')
-    def load_page():
-        return render_template('index.html', chat_output=['Hi, I am looking forward to talking to you'])
-    _, enc_vocab = data.load_vocab(os.path.join(config.PROCESSED_PATH, 'vocab.enc'))
-    inv_dec_vocab, _ = data.load_vocab(os.path.join(config.PROCESSED_PATH, 'vocab.dec'))    
-
-    model = ChatBotModel(True, batch_size=1)
-    model.build_graph() 
-
-    saver = tf.train.Saver()    
-
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        _check_restore_parameters(sess, saver)
-        output_file = open(os.path.join(config.PROCESSED_PATH, config.OUTPUT_FILE), 'a+')
-        # Decode from standard input.
-        max_length = config.BUCKETS[-1][0]
-        print('Hi, looking forward to talking to you. Press enter to leave. Max length is', max_length)
-        @app.route('/comments/', methods=['GET', 'POST'])
-        def foo():
-            if request.form['submit'] == 'Clear':
-                del conv[:]
-                return render_template('index.html', chat_output=['Hi, I am looking forward to talking to you'])
-            line = request.form['message']
-            conv.append("Human: " + line)
-            token_ids = data.sentence2id(enc_vocab, str(line))
-            bucket_id = _find_right_bucket(len(token_ids))
-            encoder_inputs, decoder_inputs, decoder_masks = data.get_batch([(token_ids, [])], 
-                                                                            bucket_id,
-                                                                            batch_size=1)
-            if (len(token_ids) > max_length):
-                response = "Exceeded maximum length of " + str(max_length)
-            elif line.find('email') is not -1:
-                response = construct_email(line)
-            else:
-                _, _, output_logits = run_step(sess, model, encoder_inputs, decoder_inputs,
-                                            decoder_masks, bucket_id, True)
-                response = _construct_response(output_logits, inv_dec_vocab)
-            conv.append('Bot: ' + response)
-            return render_template('index.html', chat_output=conv)
-        app.run(host='0.0.0.0')  
