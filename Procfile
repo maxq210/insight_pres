@@ -1,2 +1,2 @@
-web: gunicorn chatbot:chat_app()
+web: gunicorn 'chatbot:chat_app()'
 
