@@ -97,16 +97,6 @@ def _construct_response(output_logits, inv_dec_vocab):
     # Print out sentence corresponding to outputs.
     return " ".join([tf.compat.as_str(inv_dec_vocab[output]) for output in outputs])
 
-def construct_email(line):
-    recipients = ['username@company.com']
-    message = "Test"
-    if line.find('@') is not -1:
-        recipients = re.findall('\w+\@\w+.\w+', line)
-    if line.find(':') is not -1:
-        message = line[line.find(':') + 1:]
-    webbrowser.open("mailto:%s?subject=%s&body=%s" % (','.join(recipients), 'Subject', message))
-    return 'Please add a Subject to email before sending.'
-
 conv = []
 @app.route('/')
 def load_page():
@@ -133,10 +123,13 @@ def foo():
         line = request.form['message']
         conv.append("Human: " + line)
         if line.find('email') is not -1:
-            response = construct_email(line)
-            return redirect('mailto:test@mail.com')
-        elif enc_vocab[line.lower()] is None:
-            response = "I don't understand."
+            recipients = ['username@company.com']
+            message = "Test"
+            if line.find('@') is not -1:
+                recipients = re.findall('\w+\@\w+.\w+', line)
+            if line.find(':') is not -1:
+                message = line[line.find(':') + 1:]
+            return redirect('mailto:%s?subject=%s&body=%s' % (','.join(recipients), 'Subject', message))
         else:
             token_ids = data.sentence2id(enc_vocab, line)
             bucket_id = _find_right_bucket(len(token_ids))
