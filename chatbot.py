@@ -97,8 +97,8 @@ def _construct_response(output_logits, inv_dec_vocab):
     return " ".join([tf.compat.as_str(inv_dec_vocab[output]) for output in outputs])
 
 def chat_app():
-    conv = []
     app = Flask(__name__)
+    conv = []
     @app.route('/')
     def load_page():
         return render_template('index.html', chat_output=['Hi, I am looking forward to talking to you'])
