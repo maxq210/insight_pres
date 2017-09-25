@@ -18,10 +18,10 @@ def basic_tokenizer(line, normalize_digits=True):
     """ A basic tokenizer to tokenize text into tokens.
     Feel free to change this to suit your need. """
     #removes <u>, </u>, [, ] from given line
-    line = re.sub('<u>', '', bytes(line, 'utf8')) #re.sub is regex
-    line = re.sub('</u>', '', bytes(line, 'utf8'))
-    line = re.sub('\[', '', bytes(line, 'utf8'))
-    line = re.sub('\]', '', bytes(line, 'utf8'))
+    line = re.sub(b'<u>', b'', line) #re.sub is regex
+    line = re.sub(b'</u>', b'', line)
+    line = re.sub(b'\[', b'', line)
+    line = re.sub(b'\]', b'', line)
     words = []
     #re.compiles a regex into a regex object so match or search can be used
     #python 3: b"" turns string into "bytes literal" which turns string into byte. Ignored in Python 2
