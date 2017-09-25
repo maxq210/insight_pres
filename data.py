@@ -86,8 +86,10 @@ def _reshape_batch(inputs, size, batch_size):
     """
     batch_inputs = []
     for length_id in range(size):
+        if type(batch_size) is 'NoneType':
+            batch_size = 0
         batch_inputs.append(np.array([inputs[batch_id][length_id]
-                                    for batch_id in range(int(batch_size or 0))], dtype=np.int32))
+                                    for batch_id in range(batch_size)], dtype=np.int32))
     return batch_inputs
 
 
