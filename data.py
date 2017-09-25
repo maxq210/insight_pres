@@ -118,7 +118,7 @@ def basic_tokenizer(line, normalize_digits=True):
     #re.compiles a regex into a regex object so match or search can be used
     #python 3: b"" turns string into "bytes literal" which turns string into byte. Ignored in Python 2
     #r string prefix is raw string: '\n' is \,n instead of newline
-    _WORD_SPLIT = re.compile(b"([.,!?\"'-<>:;)(])") #includes () for re.split below
+    _WORD_SPLIT = re.compile("([.,!?\"'-<>:;)(])") #includes () for re.split below
     _DIGIT_RE = re.compile(r"\d")
     #strip removes whitespace at beginning and end
     #lowercase string
